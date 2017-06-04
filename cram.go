@@ -24,13 +24,16 @@ func main() {
 	err = os.Remove(name)
 	check(err)
 
+	var d []byte
 	if bytes.Count(og, []byte{'\n'}) < 1 {
-		d := uncram(og)
-		err = ioutil.WriteFile(strings.Replace(name, ".cram", "", -1), d, os.ModePerm)
+		d = uncram(og)
+		name = strings.Replace(name, ".cram", "", -1)
 	} else {
-		d := cram(og)
-		err = ioutil.WriteFile(name+".cram", d, os.ModePerm)
+		d = cram(og)
+		name = name + ".cram"
 	}
+
+	err = ioutil.WriteFile(name, d, os.ModePerm)
 	check(err)
 }
 
