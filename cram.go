@@ -21,16 +21,16 @@ func main() {
 	og, err := ioutil.ReadFile(name)
 	check(err)
 
+	err = os.Remove(name)
+	check(err)
+
 	if bytes.Count(og, []byte{'\n'}) < 1 {
 		d := uncram(og)
 		err = ioutil.WriteFile(strings.Replace(name, ".cram", "", -1), d, os.ModePerm)
 	} else {
 		d := cram(og)
-		err = ioutil.WriteFile(name + ".cram", d, os.ModePerm)
+		err = ioutil.WriteFile(name+".cram", d, os.ModePerm)
 	}
-	check(err)
-
-	err = os.Remove(name)
 	check(err)
 }
 
