@@ -14,32 +14,48 @@ const (
 
 type Buf struct {
 	*sync.Mutex
-	B []byte
+	og []byte
+	new []byte
+	from byte
+	to byte
 }
 
-func Replace(buf []byte, start int, end int) {
+func ReplaceAsync(done chan bool, buf Buf, start int, end int) {
 	if end - start < 1 {
 		buf.Lock()
 		defer buf.Unlock()
 		
-		if buf[start] == newline {
-			buf[start] = tab
+		if buf.og[start] == buf.from {
+			buf.new[start] = buf.to
+		} else {
+			buf.new[start] = buf.og[start]
 		}
+		done <- true
 		return
 	}
 
 	// 0 1 2 3 4 5
 	mid := start + (end - start) / 2
-	Replace(buf, start, mid)
-	Replace(buf, mid+1, end)
+	ReplaceAsync(done, buf, start, mid)
+	ReplaceAsync(done, buf, mid+1, end)
 }
 
-func RecReplace(buf []byte, start int, end int) {
+func Replace(raw []byte, from byte, to byte) []byte {
+	new := make([]byte, len(raw))
+	buf := Buf{
+		&sync.Mutex{},
+		raw,
+		new,
+		from,
+		to,
+	}
+	done := make(chan bool)
+	go ReplaceAsync(done, buf, 0, len(raw)-1)
 
-}
-
-func ReplaceAll(buf []byte) {
-	Replace(buf, 0, len(buf) - 1)
+	for i := 0; i < len(raw); i++ {
+		<-done
+	}
+	return buf.new
 }
 
 func main() {
@@ -48,12 +64,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// buf := Buf{
-	// 	&sync.Mutex{},
-	// 	f,
-	// }
-	// Replace(f, 0, len(f)-1)
-	ReplaceAll(f)
+	Replace(f, newline, tab)
 
 	fmt.Printf("%s\n", f)
 }
